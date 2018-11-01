@@ -1,0 +1,9 @@
+name: 'Migrate Cron'
+type: module
+description: 'Run migrations at cron'
+version: 8.x-1.x
+core: 8.x
+package: 'Migration'
+dependencies:
+  - migrate
+  - migrate_plus
