@@ -2,14 +2,47 @@
 
 namespace Drupal\migrate_cron\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-
+use Drupal\migrate\Plugin\MigrationPluginManagerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Configure Google_Analytics settings for this site.
+ * Configure Migrate Cron settings for this site.
  */
-class MigrateCronAdminSettingsForm extends ConfigFormBase {
+class MigrateCronAdminSettingsForm extends ConfigFormBase implements ContainerInjectionInterface {
+
+  /**
+   * The migration plugin manager.
+   *
+   * @var \Drupal\migrate\Plugin\MigrationPluginManagerInterface
+   */
+  protected $migratePluginManager;
+
+  /**
+   * Constructs a new MigrateCronAdminSettingsForm.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\migrate\Plugin\MigrationPluginManagerInterface $plugin_manager
+   *   The migration plugin manager.
+   */
+  public function __construct(ConfigFactoryInterface $config_factory, MigrationPluginManagerInterface $plugin_manager) {
+    parent::__construct($config_factory);
+    $this->migratePluginManager = $plugin_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('plugin.manager.migration')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -30,12 +63,7 @@ class MigrateCronAdminSettingsForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('migrate_cron.settings');
-
-    /** @var \Drupal\migrate\Plugin\MigrationPluginManager $service */
-    $service = \Drupal::service('plugin.manager.migration');
-    $migrations = $service->getDefinitions();
-
-
+    $migrations = $this->migratePluginManager->getDefinitions();
     if ($migrations) {
       foreach ($migrations as $migration) {
 
@@ -54,11 +82,10 @@ class MigrateCronAdminSettingsForm extends ConfigFormBase {
           '#default_value' => $config->get("{$migrationId}_cron"),
         ];
 
-
         $attributes = [
           'data-type' => 'number',
         ];
-        if ($config->get("{$migrationId}_cron") == FALSE ) {
+        if ($config->get("{$migrationId}_cron") == FALSE) {
           $attributes['disabled'] = TRUE;
         }
 
@@ -66,18 +93,19 @@ class MigrateCronAdminSettingsForm extends ConfigFormBase {
           '#maxlength' => 20,
           '#size' => 10,
           '#title' => 'Run at interval',
-          '#description' => 'The interval (in seconds) the migration should run.
-                            <br/>If left empty or the value is lower then the cron interval - migration will run at each cron.',
+          '#description' => $this->t("The interval (in seconds) the migration should run.<br/>If left empty or the value is lower then the cron interval - migration will run at each cron."),
           '#type' => 'number',
           '#default_value' => ($config->get("{$migrationId}_cron") == FALSE ? NULL : $config->get("{$migrationId}_interval")),
-          '#attributes' =>  $attributes,
+          '#attributes' => $attributes,
           '#states' => [
             'disabled' => [
-              ':input[name="' . $migrationId . '_cron"]' => ['checked' => FALSE]],
+              ':input[name="' . $migrationId . '_cron"]' => ['checked' => FALSE],
+            ],
           ],
         ];
       }
-    } else {
+    }
+    else {
       $form['migrations']['empty'] = [
         '#markup' => $this->t('There are no migrations.'),
       ];
@@ -89,20 +117,10 @@ class MigrateCronAdminSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    parent::validateForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     parent::submitForm($form, $form_state);
     $config = $this->config('migrate_cron.settings');
-
-    /** @var \Drupal\migrate\Plugin\MigrationPluginManager $service */
-    $service = \Drupal::service('plugin.manager.migration');
-    $migrations = $service->getDefinitions();
+    $migrations = $this->migratePluginManager->getDefinitions();
     if ($migrations) {
       foreach ($migrations as $migration) {
         $migrationId = $migration['id'];
