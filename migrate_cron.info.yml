@@ -1,11 +1,10 @@
 name: 'Migrate Cron'
 type: module
 description: 'Run migrations at cron.'
-version: 8.x-1.x
 core: 8.x
 core_version_requirement: ^8 || ^9
 package: 'Migration'
 configure: migrate_cron.admin_settings_form
 dependencies:
-  - migrate
-  - migrate_plus
+  - drupal:migrate
+  - migrate_plus:migrate_plus
