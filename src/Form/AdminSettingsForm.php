@@ -3,7 +3,6 @@
 namespace Drupal\migrate_cron\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\migrate\Plugin\MigrationPluginManagerInterface;
@@ -12,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Configure Migrate Cron settings for this site.
  */
-class MigrateCronAdminSettingsForm extends ConfigFormBase implements ContainerInjectionInterface {
+class AdminSettingsForm extends ConfigFormBase {
 
   /**
    * The migration plugin manager.
@@ -22,7 +21,7 @@ class MigrateCronAdminSettingsForm extends ConfigFormBase implements ContainerIn
   protected $migratePluginManager;
 
   /**
-   * Constructs a new MigrateCronAdminSettingsForm.
+   * Constructs a new AdminSettingsForm.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
@@ -63,8 +62,7 @@ class MigrateCronAdminSettingsForm extends ConfigFormBase implements ContainerIn
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('migrate_cron.settings');
-    $migrations = $this->migratePluginManager->getDefinitions();
-    if ($migrations) {
+    if ($migrations = $this->migratePluginManager->getDefinitions()) {
       foreach ($migrations as $migration) {
 
         $migrationId = $migration['id'];
@@ -73,13 +71,16 @@ class MigrateCronAdminSettingsForm extends ConfigFormBase implements ContainerIn
           '#type' => 'details',
           '#title' => $migration['label'],
           '#description' => $this->t("Migration cron settings for <em>@migration_id</em>", ['@migration_id' => $migrationId]),
-          '#open' => TRUE,
+          '#open' => (bool) $config->get("{$migrationId}_cron"),
+
+          // Move migrations with enabled cron to the top on the settings form.
+          '#weight' => $config->get("{$migrationId}_cron") ? -10 : 10,
         ];
         $form[$migrationId]["{$migrationId}_cron"] = [
           '#description' => $this->t('If checked, migration will run at cron.'),
           '#title' => $this->t('Run at cron'),
           '#type' => 'checkbox',
-          '#default_value' => $config->get("{$migrationId}_cron"),
+          '#default_value' => (bool) $config->get("{$migrationId}_cron"),
         ];
 
         $attributes = [
