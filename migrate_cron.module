@@ -52,7 +52,9 @@ function migrate_cron_cron() {
           }
           \Drupal::state()->set('migrate_cron.last_run.' . $migrationId, $current_time);
           $migrate->setTrackLastImported(TRUE);
-          $migrate->getIdMap()->prepareUpdate();
+          if (!$config->get("{$migrationId}_skip_update")) {
+            $migrate->getIdMap()->prepareUpdate();
+          }
           $executable = new MigrateExecutable($migrate, new MigrateMessage());
           $executable->import();
         }

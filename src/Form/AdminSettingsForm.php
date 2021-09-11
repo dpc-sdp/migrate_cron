@@ -104,6 +104,18 @@ class AdminSettingsForm extends ConfigFormBase {
             ],
           ],
         ];
+
+        $form[$migrationId]["{$migrationId}_skip_update"] = [
+          '#type' => 'checkbox',
+          '#title' => 'Don\'t update previously migrated entities',
+          '#description' => $this->t("If checked, previously migrated entities won't be updated."),
+          '#default_value' => ($config->get("{$migrationId}_cron") == FALSE ? NULL : $config->get("{$migrationId}_skip_update")),
+          '#states' => [
+            'disabled' => [
+              ':input[name="' . $migrationId . '_cron"]' => ['checked' => FALSE],
+            ],
+          ],
+        ];
       }
     }
     else {
@@ -128,6 +140,7 @@ class AdminSettingsForm extends ConfigFormBase {
         $config
           ->set("{$migrationId}_cron", $form_state->getValue("{$migrationId}_cron"))
           ->set("{$migrationId}_interval", $form_state->getValue("{$migrationId}_interval"))
+          ->set("{$migrationId}_skip_update", $form_state->getValue("{$migrationId}_skip_update"))
           ->save();
       }
     }
