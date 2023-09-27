@@ -1,0 +1,6 @@
+{
+    "name": "drupal/migrate_cron",
+    "type": "drupal-module",
+    "description": "Run migrations at cron.",
+    "license": "GPL-2.0+"
+  }
