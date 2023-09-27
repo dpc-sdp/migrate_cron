@@ -2,7 +2,7 @@ name: 'Migrate Cron'
 type: module
 description: 'Run migrations at cron.'
 core: 8.x
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^8 || ^9 || ^10
 package: 'Migration'
 configure: migrate_cron.admin_settings_form
 dependencies:
